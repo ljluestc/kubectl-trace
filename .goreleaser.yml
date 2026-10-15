@@ -1,3 +1,5 @@
+version: 2
+
 project_name: kubectl-trace
 before:
   hooks:
@@ -44,15 +46,15 @@ builds:
 
 archives:
   - id: "kubectl-trace"
-    builds:
+    ids:
     - "kubectl-trace"
     name_template: 'kubectl-trace_{{ .Tag }}_{{ .Os }}_{{ .Arch }}'
     format_overrides:
     - goos: windows
-      format: zip
+      formats: [zip]
 
 snapshot:
-  name_template: 'master'
+  version_template: 'master'
 
 release:
   github:
