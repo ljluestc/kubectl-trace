@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -ex
+set -o pipefail
 
 LSB_FILE="/etc/lsb-release.host"
 OS_RELEASE_FILE="/etc/os-release.host"
@@ -19,7 +20,12 @@ generate_headers()
   elif [ -e "/boot.host/config-${KERNEL_VERSION}" ]; then
     cp "/boot.host/config-${KERNEL_VERSION}" .config
   fi
-  make ARCH=x86 oldconfig > /dev/null
+  # Use olddefconfig rather than oldconfig: symbols missing from the host
+  # config (e.g. compiler-dependent ones, since the host kernel may have been
+  # built with a different toolchain) would otherwise trigger an interactive
+  # prompt, which fails with "Error in reading or end of file." as there is no
+  # stdin in the container. olddefconfig sets them to their defaults instead.
+  make ARCH=x86 olddefconfig > /dev/null
   make ARCH=x86 prepare > /dev/null
 
   # Clean up abundant non-header files to speed-up copying
@@ -30,7 +36,7 @@ fetch_cos_linux_sources()
 {
   echo "Fetching upstream kernel sources."
   mkdir -p "${BUILD_DIR}"
-  curl -s "https://storage.googleapis.com/cos-tools/${BUILD_ID}/kernel-src.tar.gz" \
+  curl -sSfL "https://storage.googleapis.com/cos-tools/${BUILD_ID}/kernel-src.tar.gz" \
     | tar -xzf - -C "${BUILD_DIR}"
 }
 
